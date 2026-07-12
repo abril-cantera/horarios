@@ -125,13 +125,12 @@ export default function HomePage() {
                   </p>
                 </div>
               ) : (
-                groups.map((group, i) => (
+                groups.map((group) => (
                   <MonthGroupSection
                     key={group.key}
                     group={group}
                     onDelete={removeEntry}
                     onEdit={handleEditEntry}
-                    defaultOpen={i === 0}
                     labels={labels}
                   />
                 ))
