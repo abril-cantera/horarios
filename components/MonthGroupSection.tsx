@@ -9,11 +9,12 @@ import { EntryCard } from "./EntryCard"
 interface Props {
   group: MonthGroup
   onDelete: (id: string) => void
+  onEdit: (entry: import("@/lib/types").TimeEntry) => void
   defaultOpen?: boolean
   labels: Label[]
 }
 
-export function MonthGroupSection({ group, onDelete, defaultOpen = false, labels }: Props) {
+export function MonthGroupSection({ group, onDelete, onEdit, defaultOpen = false, labels }: Props) {
   const [open, setOpen] = useState(defaultOpen)
 
   return (
@@ -44,7 +45,7 @@ export function MonthGroupSection({ group, onDelete, defaultOpen = false, labels
       {open && (
         <div className="px-4 pb-2 border-t border-border">
           {group.entries.map(entry => (
-            <EntryCard key={entry.id} entry={entry} onDelete={onDelete} labels={labels} />
+            <EntryCard key={entry.id} entry={entry} onDelete={onDelete} onEdit={onEdit} labels={labels} />
           ))}
         </div>
       )}

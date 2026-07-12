@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Trash2, Check, Pencil, Plus, Tag } from "lucide-react"
 import { Label } from "@/lib/types"
+import { PRESET_COLORS } from "@/lib/colors"
 
 interface Props {
   labels: Label[]
@@ -10,11 +11,6 @@ interface Props {
   onDelete: (id: string) => void
   onUpdate: (id: string, name: string, color: string) => void
 }
-
-const PRESET_COLORS = [
-  "#4ade80", "#60a5fa", "#f87171", "#fbbf24",
-  "#a78bfa", "#fb923c", "#34d399", "#f472b6",
-]
 
 function ColorPicker({ value, onChange }: { value: string; onChange: (c: string) => void }) {
   return (

@@ -46,9 +46,30 @@ export function useEntries() {
     []
   )
 
+  const updateEntry = useCallback(
+    (id: string, entryTime: string, exitTime: string, description?: string, labelId?: string) => {
+      const minutes = calcMinutes(entryTime, exitTime)
+      setEntries((prev) =>
+        prev.map((e) =>
+          e.id === id
+            ? {
+                ...e,
+                entryTime,
+                exitTime,
+                totalMinutes: minutes,
+                description: description?.trim() || undefined,
+                labelId: labelId || undefined,
+              }
+            : e
+        )
+      )
+    },
+    []
+  )
+
   const removeEntry = useCallback((id: string) => {
     setEntries((prev) => prev.filter((e) => e.id !== id))
   }, [])
 
-  return { entries, addEntries, removeEntry, loaded }
+  return { entries, addEntries, updateEntry, removeEntry, loaded }
 }

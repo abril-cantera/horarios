@@ -1,39 +1,54 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { X, ChevronLeft, ChevronRight, Check, Tag, Plus } from "lucide-react"
-import { calcMinutes, formatHours, getDaysInMonth, formatDateStr, getMonthKey } from "@/lib/timeUtils"
-import { Label } from "@/lib/types"
+import { X, ChevronLeft, ChevronRight, Check, Tag, Plus, Moon } from "lucide-react"
+import { calcMinutes, formatHours, getDaysInMonth, formatDateStr } from "@/lib/timeUtils"
+import { PRESET_COLORS } from "@/lib/colors"
+import { Label, TimeEntry } from "@/lib/types"
 
 interface Props {
   onClose: () => void
   onAdd: (dates: string[], entry: string, exit: string, description?: string, labelId?: string) => void
+  onUpdate?: (id: string, entry: string, exit: string, description?: string, labelId?: string) => void
   existingDates: string[]
   labels: Label[]
   onCreateLabel: (name: string, color: string) => string
+  editEntry?: TimeEntry | null
 }
 
 const WEEKDAY_LABELS = ["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"]
-
-const PRESET_COLORS = [
-  "#4ade80", "#60a5fa", "#f87171", "#fbbf24",
-  "#a78bfa", "#fb923c", "#34d399", "#f472b6",
-]
 
 function getWeekdayIndex(d: Date) {
   return (d.getDay() + 6) % 7
 }
 
-export function AddEntryModal({ onClose, onAdd, existingDates, labels, onCreateLabel }: Props) {
+export function AddEntryModal({
+  onClose,
+  onAdd,
+  onUpdate,
+  existingDates,
+  labels,
+  onCreateLabel,
+  editEntry,
+}: Props) {
+  const isEditing = !!editEntry
   const today = new Date()
+
   const [viewYear, setViewYear] = useState(today.getFullYear())
   const [viewMonth, setViewMonth] = useState(today.getMonth() + 1)
-  const [selectedDates, setSelectedDates] = useState<string[]>([])
-  const [entryTime, setEntryTime] = useState("09:00")
-  const [exitTime, setExitTime] = useState("18:00")
-  const [description, setDescription] = useState("")
-  const [selectedLabelId, setSelectedLabelId] = useState<string | null>(null)
-  const [step, setStep] = useState<"days" | "time">("days")
+  const [selectedDates, setSelectedDates] = useState<string[]>(
+    editEntry ? [editEntry.date] : []
+  )
+  const [entryTime, setEntryTime] = useState(editEntry?.entryTime ?? "09:00")
+  const [exitTime, setExitTime] = useState(editEntry?.exitTime ?? "18:00")
+  const [description, setDescription] = useState(editEntry?.description ?? "")
+  const [selectedLabelId, setSelectedLabelId] = useState<string | null>(
+    editEntry?.labelId ?? null
+  )
+  const [isFrancoDay, setIsFrancoDay] = useState(
+    editEntry ? editEntry.totalMinutes === 0 : false
+  )
+  const [step, setStep] = useState<"days" | "time">(isEditing ? "time" : "days")
 
   // New label inline creation
   const [showNewLabel, setShowNewLabel] = useState(false)
@@ -43,9 +58,9 @@ export function AddEntryModal({ onClose, onAdd, existingDates, labels, onCreateL
   const days = useMemo(() => getDaysInMonth(viewYear, viewMonth), [viewYear, viewMonth])
 
   const totalMinutes = useMemo(() => {
-    if (!entryTime || !exitTime) return 0
+    if (isFrancoDay || !entryTime || !exitTime) return 0
     return calcMinutes(entryTime, exitTime)
-  }, [entryTime, exitTime])
+  }, [entryTime, exitTime, isFrancoDay])
 
   const prevMonth = () => {
     if (viewMonth === 1) { setViewMonth(12); setViewYear(y => y - 1) }
@@ -77,10 +92,22 @@ export function AddEntryModal({ onClose, onAdd, existingDates, labels, onCreateL
   }
 
   const handleSubmit = () => {
-    if (selectedDates.length === 0 || !entryTime || !exitTime) return
-    onAdd(selectedDates, entryTime, exitTime, description, selectedLabelId ?? undefined)
+    // Cuando es franco, guardamos 00:00 - 00:00 => 0 horas
+    const entry = isFrancoDay ? "00:00" : entryTime
+    const exit = isFrancoDay ? "00:00" : exitTime
+
+    if (isEditing && editEntry && onUpdate) {
+      onUpdate(editEntry.id, entry, exit, description, selectedLabelId ?? undefined)
+      onClose()
+      return
+    }
+
+    if (selectedDates.length === 0) return
+    onAdd(selectedDates, entry, exit, description, selectedLabelId ?? undefined)
     onClose()
   }
+
+  const canSave = isFrancoDay || totalMinutes > 0
 
   const firstDay = getWeekdayIndex(days[0])
   const calendarCells: (Date | null)[] = [
@@ -98,7 +125,7 @@ export function AddEntryModal({ onClose, onAdd, existingDates, labels, onCreateL
         {/* Header */}
         <div className="flex items-center justify-between">
           <h2 className="text-foreground font-bold text-lg font-sans">
-            {step === "days" ? "Seleccionar días" : "Horario"}
+            {isEditing ? "Editar registro" : step === "days" ? "Seleccionar días" : "Horario"}
           </h2>
           <button
             onClick={onClose}
@@ -109,7 +136,7 @@ export function AddEntryModal({ onClose, onAdd, existingDates, labels, onCreateL
           </button>
         </div>
 
-        {step === "days" && (
+        {step === "days" && !isEditing && (
           <>
             {/* Month nav */}
             <div className="flex items-center justify-between">
@@ -180,38 +207,73 @@ export function AddEntryModal({ onClose, onAdd, existingDates, labels, onCreateL
           <>
             {/* Summary of selected days */}
             <div className="bg-secondary rounded-xl px-4 py-3">
-              <p className="text-muted-foreground text-xs font-mono uppercase tracking-wider mb-1">Días seleccionados</p>
-              <p className="text-foreground text-sm font-mono">{selectedDates.length} {selectedDates.length === 1 ? "día" : "días"}</p>
+              <p className="text-muted-foreground text-xs font-mono uppercase tracking-wider mb-1">
+                {isEditing ? "Editando" : "Días seleccionados"}
+              </p>
+              <p className="text-foreground text-sm font-mono">
+                {isEditing
+                  ? editEntry?.date
+                  : `${selectedDates.length} ${selectedDates.length === 1 ? "día" : "días"}`}
+              </p>
             </div>
 
-            {/* Time inputs */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-muted-foreground text-xs font-mono uppercase tracking-wider">Entrada</label>
-                <input
-                  type="time"
-                  value={entryTime}
-                  onChange={e => setEntryTime(e.target.value)}
-                  className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground font-mono text-lg text-center focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-muted-foreground text-xs font-mono uppercase tracking-wider">Salida</label>
-                <input
-                  type="time"
-                  value={exitTime}
-                  onChange={e => setExitTime(e.target.value)}
-                  className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground font-mono text-lg text-center focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-            </div>
+            {/* Franco toggle */}
+            <button
+              onClick={() => setIsFrancoDay(v => !v)}
+              className={`w-full flex items-center justify-between rounded-xl px-4 py-3 border-2 transition-all font-sans ${
+                isFrancoDay
+                  ? "border-sky-500 bg-sky-500/10"
+                  : "border-border bg-secondary"
+              }`}
+              aria-pressed={isFrancoDay}
+            >
+              <span className="flex items-center gap-2">
+                <Moon className={`w-4 h-4 ${isFrancoDay ? "text-sky-500" : "text-muted-foreground"}`} />
+                <span className={`text-sm font-medium ${isFrancoDay ? "text-sky-500" : "text-foreground"}`}>
+                  Día franco (0 horas)
+                </span>
+              </span>
+              <span
+                className={`w-10 h-6 rounded-full flex items-center px-0.5 transition-colors ${
+                  isFrancoDay ? "bg-sky-500 justify-end" : "bg-muted justify-start"
+                }`}
+              >
+                <span className="w-5 h-5 rounded-full bg-white shadow" />
+              </span>
+            </button>
 
-            {/* Preview total */}
-            {totalMinutes > 0 && (
-              <div className="bg-secondary rounded-xl px-4 py-3 text-center">
-                <p className="text-muted-foreground text-xs font-mono uppercase tracking-wider mb-1">Total por día</p>
-                <p className="text-primary text-2xl font-bold font-mono">{formatHours(totalMinutes)}</p>
-              </div>
+            {!isFrancoDay && (
+              <>
+                {/* Time inputs */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-muted-foreground text-xs font-mono uppercase tracking-wider">Entrada</label>
+                    <input
+                      type="time"
+                      value={entryTime}
+                      onChange={e => setEntryTime(e.target.value)}
+                      className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground font-mono text-lg text-center focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-muted-foreground text-xs font-mono uppercase tracking-wider">Salida</label>
+                    <input
+                      type="time"
+                      value={exitTime}
+                      onChange={e => setExitTime(e.target.value)}
+                      className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground font-mono text-lg text-center focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                </div>
+
+                {/* Preview total */}
+                {totalMinutes > 0 && (
+                  <div className="bg-secondary rounded-xl px-4 py-3 text-center">
+                    <p className="text-muted-foreground text-xs font-mono uppercase tracking-wider mb-1">Total por día</p>
+                    <p className="text-primary text-2xl font-bold font-mono">{formatHours(totalMinutes)}</p>
+                  </div>
+                )}
+              </>
             )}
 
             {/* Description */}
@@ -256,7 +318,7 @@ export function AddEntryModal({ onClose, onAdd, existingDates, labels, onCreateL
                     maxLength={30}
                     className="w-full bg-muted border border-border rounded-lg px-3 py-2 text-foreground text-sm font-sans focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-muted-foreground/40"
                   />
-                  <div className="flex items-center gap-2">
+                  <div className="space-y-2">
                     <span className="text-muted-foreground text-xs font-mono">Color</span>
                     <div className="flex gap-2 flex-wrap">
                       {PRESET_COLORS.map(c => (
@@ -322,14 +384,14 @@ export function AddEntryModal({ onClose, onAdd, existingDates, labels, onCreateL
 
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => setStep("days")}
+                onClick={() => (isEditing ? onClose() : setStep("days"))}
                 className="bg-secondary text-foreground rounded-xl py-3 font-medium text-sm transition-colors font-sans"
               >
-                Volver
+                {isEditing ? "Cancelar" : "Volver"}
               </button>
               <button
                 onClick={handleSubmit}
-                disabled={totalMinutes <= 0}
+                disabled={!canSave}
                 className="bg-primary text-primary-foreground rounded-xl py-3 font-medium text-sm disabled:opacity-30 transition-opacity flex items-center justify-center gap-2 font-sans"
               >
                 <Check className="w-4 h-4" />
