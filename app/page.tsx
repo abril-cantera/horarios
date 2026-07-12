@@ -9,6 +9,7 @@ import { MonthSummary } from "@/components/MonthSummary"
 import { MonthGroupSection } from "@/components/MonthGroupSection"
 import { AddEntryModal } from "@/components/AddEntryModal"
 import { LabelsSection } from "@/components/LabelsSection"
+import { ThemeToggle } from "@/components/ThemeToggle"
 import type { TimeEntry } from "@/lib/types"
 
 type Tab = "horarios" | "etiquetas"
@@ -57,12 +58,15 @@ export default function HomePage() {
       <div className="max-w-sm mx-auto px-4 pt-12 pb-28">
 
         {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-1">
-            <Clock className="w-5 h-5 text-primary" />
-            <h1 className="text-foreground font-bold text-2xl tracking-tight">Horarios</h1>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Clock className="w-5 h-5 text-primary" />
+              <h1 className="text-foreground font-bold text-2xl tracking-tight">Horarios</h1>
+            </div>
+            <p className="text-muted-foreground text-sm font-mono">Registro de horas trabajadas</p>
           </div>
-          <p className="text-muted-foreground text-sm font-mono">Registro de horas trabajadas</p>
+          <ThemeToggle />
         </div>
 
         {/* Tabs */}
@@ -121,13 +125,12 @@ export default function HomePage() {
                   </p>
                 </div>
               ) : (
-                groups.map((group, i) => (
+                groups.map((group) => (
                   <MonthGroupSection
                     key={group.key}
                     group={group}
                     onDelete={removeEntry}
                     onEdit={handleEditEntry}
-                    defaultOpen={i === 0}
                     labels={labels}
                   />
                 ))
