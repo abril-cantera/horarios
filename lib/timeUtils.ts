@@ -90,3 +90,28 @@ export function getLast12Months(): { key: string; label: string }[] {
   }
   return result
 }
+
+// Devuelve una lista de meses desde `back` meses atrás hasta `forward` meses adelante
+export function getMonthRange(back = 24, forward = 12): { key: string; label: string }[] {
+  const result: { key: string; label: string }[] = []
+  const now = new Date()
+  for (let i = forward; i >= -back; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1)
+    const key = getMonthKey(d)
+    const label = d.toLocaleDateString("es-ES", { month: "long", year: "numeric" })
+    result.push({ key, label: label.charAt(0).toUpperCase() + label.slice(1) })
+  }
+  return result
+}
+
+// Suma (o resta) meses a una clave YYYY-MM
+export function addMonthsToKey(key: string, delta: number): string {
+  const [year, month] = key.split("-").map(Number)
+  const d = new Date(year, month - 1 + delta, 1)
+  return getMonthKey(d)
+}
+
+// Un registro es "franco" cuando tiene 0 minutos trabajados
+export function isFranco(minutes: number): boolean {
+  return minutes === 0
+}

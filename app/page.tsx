@@ -9,13 +9,15 @@ import { MonthSummary } from "@/components/MonthSummary"
 import { MonthGroupSection } from "@/components/MonthGroupSection"
 import { AddEntryModal } from "@/components/AddEntryModal"
 import { LabelsSection } from "@/components/LabelsSection"
+import type { TimeEntry } from "@/lib/types"
 
 type Tab = "horarios" | "etiquetas"
 
 export default function HomePage() {
-  const { entries, addEntries, removeEntry, loaded: entriesLoaded } = useEntries()
+  const { entries, addEntries, updateEntry, removeEntry, loaded: entriesLoaded } = useEntries()
   const { labels, addLabel, removeLabel, updateLabel, loaded: labelsLoaded } = useLabels()
   const [showModal, setShowModal] = useState(false)
+  const [editEntry, setEditEntry] = useState<TimeEntry | null>(null)
   const [selectedMonth, setSelectedMonth] = useState(() => getMonthKey(new Date()))
   const [activeTab, setActiveTab] = useState<Tab>("horarios")
 
@@ -30,6 +32,16 @@ export default function HomePage() {
     labelId?: string
   ) => {
     addEntries(dates, entry, exit, description, labelId)
+  }
+
+  const handleEditEntry = (entry: TimeEntry) => {
+    setEditEntry(entry)
+    setShowModal(true)
+  }
+
+  const handleCloseModal = () => {
+    setShowModal(false)
+    setEditEntry(null)
   }
 
   if (!entriesLoaded || !labelsLoaded) {
@@ -114,6 +126,7 @@ export default function HomePage() {
                     key={group.key}
                     group={group}
                     onDelete={removeEntry}
+                    onEdit={handleEditEntry}
                     defaultOpen={i === 0}
                     labels={labels}
                   />
@@ -138,7 +151,7 @@ export default function HomePage() {
       {activeTab === "horarios" && (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2">
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => { setEditEntry(null); setShowModal(true) }}
             className="w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
             aria-label="Agregar horario"
           >
@@ -150,11 +163,13 @@ export default function HomePage() {
       {/* Modal */}
       {showModal && (
         <AddEntryModal
-          onClose={() => setShowModal(false)}
+          onClose={handleCloseModal}
           onAdd={handleAddEntries}
+          onUpdate={updateEntry}
           existingDates={existingDates}
           labels={labels}
           onCreateLabel={addLabel}
+          editEntry={editEntry}
         />
       )}
     </main>
