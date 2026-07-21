@@ -1,9 +1,15 @@
 "use client"
 
-import { Trash2, Pencil, Moon } from "lucide-react"
+import { Trash2, Pencil, Moon, ShieldCheck, ShieldX } from "lucide-react"
 import { TimeEntry, Label } from "@/lib/types"
-import { formatHours, formatDayLabel, isFranco } from "@/lib/timeUtils"
-import { FRANCO_COLOR } from "@/lib/colors"
+import { formatHours, formatDayLabel } from "@/lib/timeUtils"
+import { resolveAbsence, type AbsenceId } from "@/lib/absences"
+
+const ABSENCE_ICONS: Record<AbsenceId, typeof Moon> = {
+  franco: Moon,
+  justificado: ShieldCheck,
+  injustificado: ShieldX,
+}
 
 interface Props {
   entry: TimeEntry
@@ -14,7 +20,8 @@ interface Props {
 
 export function EntryCard({ entry, onDelete, onEdit, labels }: Props) {
   const label = entry.labelId ? labels.find(l => l.id === entry.labelId) : null
-  const franco = isFranco(entry.totalMinutes)
+  const absence = resolveAbsence(entry)
+  const AbsenceIcon = absence ? ABSENCE_ICONS[absence.id] : null
 
   return (
     <div className="py-3 border-b border-border last:border-0">
@@ -26,15 +33,15 @@ export function EntryCard({ entry, onDelete, onEdit, labels }: Props) {
           </p>
         </div>
 
-        {/* Times or Franco */}
+        {/* Times or Absence */}
         <div className="flex-1 flex items-center gap-2 min-w-0">
-          {franco ? (
+          {absence ? (
             <span
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold font-sans"
-              style={{ backgroundColor: FRANCO_COLOR + "22", color: FRANCO_COLOR }}
+              style={{ backgroundColor: absence.color + "22", color: absence.color }}
             >
-              <Moon className="w-3 h-3" />
-              FRANCO
+              {AbsenceIcon && <AbsenceIcon className="w-3 h-3" />}
+              {absence.short}
             </span>
           ) : (
             <>
@@ -46,7 +53,7 @@ export function EntryCard({ entry, onDelete, onEdit, labels }: Props) {
         </div>
 
         {/* Total */}
-        {!franco && (
+        {!absence && (
           <div className="text-right shrink-0">
             <span className="text-primary font-mono text-sm font-bold">
               {formatHours(entry.totalMinutes)}

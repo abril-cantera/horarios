@@ -22,5 +22,14 @@ export const PRESET_COLORS = [
   "#a3a3a3", // gris
 ]
 
-// Color fijo para la etiqueta automática de FRANCO
-export const FRANCO_COLOR = "#0ea5e9"
+// Colores fijos para los tipos de día especiales (0 horas).
+// Cada tipo tiene un color ÚNICO que no puede reutilizarse en etiquetas personalizadas.
+export const FRANCO_COLOR = "#0ea5e9" // celeste
+export const JUSTIFIED_COLOR = "#22c55e" // verde
+export const UNJUSTIFIED_COLOR = "#ef4444" // rojo
+
+// Colores reservados por los tipos de día especiales
+export const RESERVED_COLORS = [FRANCO_COLOR, JUSTIFIED_COLOR, UNJUSTIFIED_COLOR]
+
+// Colores disponibles para etiquetas personalizadas (excluye los reservados)
+export const LABEL_COLORS = PRESET_COLORS.filter((c) => !RESERVED_COLORS.includes(c))
