@@ -10,12 +10,13 @@ import {
   addMonthsToKey,
 } from "@/lib/timeUtils"
 import { ABSENCE_TYPES, resolveAbsence, type AbsenceId } from "@/lib/absences"
-import { ChevronDown, ChevronLeft, ChevronRight, Moon, ShieldCheck, ShieldX } from "lucide-react"
+import { ChevronDown, ChevronLeft, ChevronRight, Moon, ShieldCheck, ShieldX, Ban } from "lucide-react"
 
 const ABSENCE_ICONS: Record<AbsenceId, typeof Moon> = {
   franco: Moon,
   justificado: ShieldCheck,
   injustificado: ShieldX,
+  suspension: Ban,
 }
 
 interface Props {
@@ -39,7 +40,7 @@ export function MonthSummary({ entries, selectedMonth, onSelectMonth }: Props) {
   )
 
   const absenceCounts = useMemo(() => {
-    const counts: Record<AbsenceId, number> = { franco: 0, justificado: 0, injustificado: 0 }
+    const counts: Record<AbsenceId, number> = { franco: 0, justificado: 0, injustificado: 0, suspension: 0 }
     for (const e of monthEntries) {
       const a = resolveAbsence(e)
       if (a) counts[a.id]++
@@ -47,7 +48,8 @@ export function MonthSummary({ entries, selectedMonth, onSelectMonth }: Props) {
     return counts
   }, [monthEntries])
 
-  const totalAbsences = absenceCounts.franco + absenceCounts.justificado + absenceCounts.injustificado
+  const totalAbsences =
+    absenceCounts.franco + absenceCounts.justificado + absenceCounts.injustificado + absenceCounts.suspension
   const workedCount = monthEntries.length - totalAbsences
 
   const isCurrentMonth = selectedMonth === currentMonthKey

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { X, ChevronLeft, ChevronRight, Check, Tag, Plus, Moon, ShieldCheck, ShieldX } from "lucide-react"
+import { X, ChevronLeft, ChevronRight, Check, Tag, Plus, Moon, ShieldCheck, ShieldX, Ban } from "lucide-react"
 import { calcMinutes, formatHours, getDaysInMonth, formatDateStr } from "@/lib/timeUtils"
 import { LABEL_COLORS } from "@/lib/colors"
 import { ABSENCE_TYPES, type AbsenceId } from "@/lib/absences"
@@ -11,6 +11,7 @@ const ABSENCE_ICONS: Record<AbsenceId, typeof Moon> = {
   franco: Moon,
   justificado: ShieldCheck,
   injustificado: ShieldX,
+  suspension: Ban,
 }
 
 interface Props {
