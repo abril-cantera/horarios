@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { TimeEntry } from "@/lib/types"
+import { TimeEntry, DayType } from "@/lib/types"
 import { calcMinutes } from "@/lib/timeUtils"
 
 const STORAGE_KEY = "horario_entries"
@@ -26,7 +26,14 @@ export function useEntries() {
   }, [entries, loaded])
 
   const addEntries = useCallback(
-    (dates: string[], entryTime: string, exitTime: string, description?: string, labelId?: string) => {
+    (
+      dates: string[],
+      entryTime: string,
+      exitTime: string,
+      description?: string,
+      labelId?: string,
+      dayType?: DayType
+    ) => {
       const minutes = calcMinutes(entryTime, exitTime)
       const newEntries: TimeEntry[] = dates.map((date) => ({
         id: `${date}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -36,6 +43,7 @@ export function useEntries() {
         totalMinutes: minutes,
         description: description?.trim() || undefined,
         labelId: labelId || undefined,
+        dayType: dayType ?? "work",
       }))
       setEntries((prev) => {
         // Remove existing entries for same dates
@@ -47,7 +55,14 @@ export function useEntries() {
   )
 
   const updateEntry = useCallback(
-    (id: string, entryTime: string, exitTime: string, description?: string, labelId?: string) => {
+    (
+      id: string,
+      entryTime: string,
+      exitTime: string,
+      description?: string,
+      labelId?: string,
+      dayType?: DayType
+    ) => {
       const minutes = calcMinutes(entryTime, exitTime)
       setEntries((prev) =>
         prev.map((e) =>
@@ -59,6 +74,7 @@ export function useEntries() {
                 totalMinutes: minutes,
                 description: description?.trim() || undefined,
                 labelId: labelId || undefined,
+                dayType: dayType ?? "work",
               }
             : e
         )

@@ -9,8 +9,14 @@ import {
   getMonthRange,
   addMonthsToKey,
 } from "@/lib/timeUtils"
-import { FRANCO_COLOR } from "@/lib/colors"
-import { ChevronDown, ChevronLeft, ChevronRight, Moon } from "lucide-react"
+import { ABSENCE_TYPES, resolveAbsence, type AbsenceId } from "@/lib/absences"
+import { ChevronDown, ChevronLeft, ChevronRight, Moon, ShieldCheck, ShieldX } from "lucide-react"
+
+const ABSENCE_ICONS: Record<AbsenceId, typeof Moon> = {
+  franco: Moon,
+  justificado: ShieldCheck,
+  injustificado: ShieldX,
+}
 
 interface Props {
   entries: TimeEntry[]
@@ -32,12 +38,17 @@ export function MonthSummary({ entries, selectedMonth, onSelectMonth }: Props) {
     [monthEntries]
   )
 
-  const francoCount = useMemo(
-    () => monthEntries.filter((e) => e.totalMinutes === 0).length,
-    [monthEntries]
-  )
+  const absenceCounts = useMemo(() => {
+    const counts: Record<AbsenceId, number> = { franco: 0, justificado: 0, injustificado: 0 }
+    for (const e of monthEntries) {
+      const a = resolveAbsence(e)
+      if (a) counts[a.id]++
+    }
+    return counts
+  }, [monthEntries])
 
-  const workedCount = monthEntries.length - francoCount
+  const totalAbsences = absenceCounts.franco + absenceCounts.justificado + absenceCounts.injustificado
+  const workedCount = monthEntries.length - totalAbsences
 
   const isCurrentMonth = selectedMonth === currentMonthKey
   const selectedLabel = months.find((m) => m.key === selectedMonth)?.label ?? selectedMonth
@@ -108,20 +119,28 @@ export function MonthSummary({ entries, selectedMonth, onSelectMonth }: Props) {
         </div>
       </div>
 
-      {/* Conteo de francos */}
-      <div
-        className="flex items-center justify-between rounded-xl px-4 py-3 border"
-        style={{ backgroundColor: FRANCO_COLOR + "14", borderColor: FRANCO_COLOR + "40" }}
-      >
-        <span className="flex items-center gap-2">
-          <Moon className="w-4 h-4" style={{ color: FRANCO_COLOR }} />
-          <span className="text-sm font-medium font-sans" style={{ color: FRANCO_COLOR }}>
-            Francos
-          </span>
-        </span>
-        <span className="font-mono font-bold text-lg" style={{ color: FRANCO_COLOR }}>
-          {francoCount}
-        </span>
+      {/* Conteo por tipo de día sin horas */}
+      <div className="grid gap-2">
+        {ABSENCE_TYPES.map((a) => {
+          const Icon = ABSENCE_ICONS[a.id]
+          return (
+            <div
+              key={a.id}
+              className="flex items-center justify-between rounded-xl px-4 py-3 border"
+              style={{ backgroundColor: a.color + "14", borderColor: a.color + "40" }}
+            >
+              <span className="flex items-center gap-2">
+                <Icon className="w-4 h-4" style={{ color: a.color }} />
+                <span className="text-sm font-medium font-sans" style={{ color: a.color }}>
+                  {a.name}
+                </span>
+              </span>
+              <span className="font-mono font-bold text-lg" style={{ color: a.color }}>
+                {absenceCounts[a.id]}
+              </span>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

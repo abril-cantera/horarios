@@ -4,6 +4,9 @@ export interface Label {
   color: string // hex color
 }
 
+// Tipo de día: trabajado o alguno de los tipos de ausencia (0 horas)
+export type DayType = "work" | "franco" | "justificado" | "injustificado"
+
 export interface TimeEntry {
   id: string
   date: string // YYYY-MM-DD
@@ -12,6 +15,7 @@ export interface TimeEntry {
   totalMinutes: number
   description?: string
   labelId?: string
+  dayType?: DayType // undefined + 0 min => "franco" (compatibilidad hacia atrás)
 }
 
 export interface MonthGroup {

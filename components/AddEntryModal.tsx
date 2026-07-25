@@ -1,15 +1,22 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { X, ChevronLeft, ChevronRight, Check, Tag, Plus, Moon } from "lucide-react"
+import { X, ChevronLeft, ChevronRight, Check, Tag, Plus, Moon, ShieldCheck, ShieldX } from "lucide-react"
 import { calcMinutes, formatHours, getDaysInMonth, formatDateStr } from "@/lib/timeUtils"
-import { PRESET_COLORS } from "@/lib/colors"
+import { LABEL_COLORS } from "@/lib/colors"
+import { ABSENCE_TYPES, type AbsenceId } from "@/lib/absences"
 import { Label, TimeEntry } from "@/lib/types"
+
+const ABSENCE_ICONS: Record<AbsenceId, typeof Moon> = {
+  franco: Moon,
+  justificado: ShieldCheck,
+  injustificado: ShieldX,
+}
 
 interface Props {
   onClose: () => void
-  onAdd: (dates: string[], entry: string, exit: string, description?: string, labelId?: string) => void
-  onUpdate?: (id: string, entry: string, exit: string, description?: string, labelId?: string) => void
+  onAdd: (dates: string[], entry: string, exit: string, description?: string, labelId?: string, dayType?: import("@/lib/types").DayType) => void
+  onUpdate?: (id: string, entry: string, exit: string, description?: string, labelId?: string, dayType?: import("@/lib/types").DayType) => void
   existingDates: string[]
   labels: Label[]
   onCreateLabel: (name: string, color: string) => string
@@ -45,22 +52,24 @@ export function AddEntryModal({
   const [selectedLabelId, setSelectedLabelId] = useState<string | null>(
     editEntry?.labelId ?? null
   )
-  const [isFrancoDay, setIsFrancoDay] = useState(
-    editEntry ? editEntry.totalMinutes === 0 : false
+  const [absence, setAbsence] = useState<AbsenceId | null>(
+    editEntry && editEntry.totalMinutes === 0
+      ? ((editEntry.dayType && editEntry.dayType !== "work" ? editEntry.dayType : "franco") as AbsenceId)
+      : null
   )
   const [step, setStep] = useState<"days" | "time">(isEditing ? "time" : "days")
 
   // New label inline creation
   const [showNewLabel, setShowNewLabel] = useState(false)
   const [newLabelName, setNewLabelName] = useState("")
-  const [newLabelColor, setNewLabelColor] = useState(PRESET_COLORS[0])
+  const [newLabelColor, setNewLabelColor] = useState(LABEL_COLORS[0])
 
   const days = useMemo(() => getDaysInMonth(viewYear, viewMonth), [viewYear, viewMonth])
 
   const totalMinutes = useMemo(() => {
-    if (isFrancoDay || !entryTime || !exitTime) return 0
+    if (absence || !entryTime || !exitTime) return 0
     return calcMinutes(entryTime, exitTime)
-  }, [entryTime, exitTime, isFrancoDay])
+  }, [entryTime, exitTime, absence])
 
   const prevMonth = () => {
     if (viewMonth === 1) { setViewMonth(12); setViewYear(y => y - 1) }
@@ -88,26 +97,27 @@ export function AddEntryModal({
     setSelectedLabelId(id)
     setShowNewLabel(false)
     setNewLabelName("")
-    setNewLabelColor(PRESET_COLORS[0])
+    setNewLabelColor(LABEL_COLORS[0])
   }
 
   const handleSubmit = () => {
-    // Cuando es franco, guardamos 00:00 - 00:00 => 0 horas
-    const entry = isFrancoDay ? "00:00" : entryTime
-    const exit = isFrancoDay ? "00:00" : exitTime
+    // Cuando es una ausencia, guardamos 00:00 - 00:00 => 0 horas
+    const entry = absence ? "00:00" : entryTime
+    const exit = absence ? "00:00" : exitTime
+    const dayType = absence ?? "work"
 
     if (isEditing && editEntry && onUpdate) {
-      onUpdate(editEntry.id, entry, exit, description, selectedLabelId ?? undefined)
+      onUpdate(editEntry.id, entry, exit, description, selectedLabelId ?? undefined, dayType)
       onClose()
       return
     }
 
     if (selectedDates.length === 0) return
-    onAdd(selectedDates, entry, exit, description, selectedLabelId ?? undefined)
+    onAdd(selectedDates, entry, exit, description, selectedLabelId ?? undefined, dayType)
     onClose()
   }
 
-  const canSave = isFrancoDay || totalMinutes > 0
+  const canSave = absence !== null || totalMinutes > 0
 
   const firstDay = getWeekdayIndex(days[0])
   const calendarCells: (Date | null)[] = [
@@ -217,32 +227,49 @@ export function AddEntryModal({
               </p>
             </div>
 
-            {/* Franco toggle */}
-            <button
-              onClick={() => setIsFrancoDay(v => !v)}
-              className={`w-full flex items-center justify-between rounded-xl px-4 py-3 border-2 transition-all font-sans ${
-                isFrancoDay
-                  ? "border-sky-500 bg-sky-500/10"
-                  : "border-border bg-secondary"
-              }`}
-              aria-pressed={isFrancoDay}
-            >
-              <span className="flex items-center gap-2">
-                <Moon className={`w-4 h-4 ${isFrancoDay ? "text-sky-500" : "text-muted-foreground"}`} />
-                <span className={`text-sm font-medium ${isFrancoDay ? "text-sky-500" : "text-foreground"}`}>
-                  Día franco (0 horas)
-                </span>
-              </span>
-              <span
-                className={`w-10 h-6 rounded-full flex items-center px-0.5 transition-colors ${
-                  isFrancoDay ? "bg-sky-500 justify-end" : "bg-muted justify-start"
-                }`}
-              >
-                <span className="w-5 h-5 rounded-full bg-white shadow" />
-              </span>
-            </button>
+            {/* Absence type selector (0 horas) */}
+            <div className="space-y-2">
+              <p className="text-muted-foreground text-xs font-mono uppercase tracking-wider">
+                Día sin horas
+              </p>
+              <div className="grid gap-2">
+                {ABSENCE_TYPES.map((a) => {
+                  const Icon = ABSENCE_ICONS[a.id]
+                  const active = absence === a.id
+                  return (
+                    <button
+                      key={a.id}
+                      onClick={() => setAbsence((prev) => (prev === a.id ? null : a.id))}
+                      className="w-full flex items-center justify-between rounded-xl px-4 py-3 border-2 transition-all font-sans"
+                      style={{
+                        borderColor: active ? a.color : "var(--border)",
+                        backgroundColor: active ? a.color + "1a" : "var(--secondary)",
+                      }}
+                      aria-pressed={active}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Icon
+                          className="w-4 h-4"
+                          style={{ color: active ? a.color : "var(--muted-foreground)" }}
+                        />
+                        <span
+                          className="text-sm font-medium"
+                          style={{ color: active ? a.color : "var(--foreground)" }}
+                        >
+                          {a.name}
+                        </span>
+                        <span className="text-xs font-mono text-muted-foreground">0h</span>
+                      </span>
+                      {active && (
+                        <Check className="w-4 h-4" style={{ color: a.color }} strokeWidth={3} />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
 
-            {!isFrancoDay && (
+            {!absence && (
               <>
                 {/* Time inputs */}
                 <div className="grid grid-cols-2 gap-4">
@@ -321,7 +348,7 @@ export function AddEntryModal({
                   <div className="space-y-2">
                     <span className="text-muted-foreground text-xs font-mono">Color</span>
                     <div className="flex gap-2 flex-wrap">
-                      {PRESET_COLORS.map(c => (
+                      {LABEL_COLORS.map(c => (
                         <button
                           key={c}
                           onClick={() => setNewLabelColor(c)}

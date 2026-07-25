@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Trash2, Check, Pencil, Plus, Tag } from "lucide-react"
 import { Label } from "@/lib/types"
-import { PRESET_COLORS } from "@/lib/colors"
+import { LABEL_COLORS } from "@/lib/colors"
 
 interface Props {
   labels: Label[]
@@ -15,7 +15,7 @@ interface Props {
 function ColorPicker({ value, onChange }: { value: string; onChange: (c: string) => void }) {
   return (
     <div className="flex gap-2 flex-wrap">
-      {PRESET_COLORS.map(c => (
+      {LABEL_COLORS.map(c => (
         <button
           key={c}
           onClick={() => onChange(c)}
@@ -33,16 +33,16 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (c: string)
 export function LabelsSection({ labels, onAdd, onDelete, onUpdate }: Props) {
   const [showForm, setShowForm] = useState(false)
   const [newName, setNewName] = useState("")
-  const [newColor, setNewColor] = useState(PRESET_COLORS[0])
+  const [newColor, setNewColor] = useState(LABEL_COLORS[0])
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState("")
-  const [editColor, setEditColor] = useState(PRESET_COLORS[0])
+  const [editColor, setEditColor] = useState(LABEL_COLORS[0])
 
   const handleAdd = () => {
     if (!newName.trim()) return
     onAdd(newName, newColor)
     setNewName("")
-    setNewColor(PRESET_COLORS[0])
+    setNewColor(LABEL_COLORS[0])
     setShowForm(false)
   }
 

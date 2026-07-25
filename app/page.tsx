@@ -10,7 +10,7 @@ import { MonthGroupSection } from "@/components/MonthGroupSection"
 import { AddEntryModal } from "@/components/AddEntryModal"
 import { LabelsSection } from "@/components/LabelsSection"
 import { ThemeToggle } from "@/components/ThemeToggle"
-import type { TimeEntry } from "@/lib/types"
+import type { TimeEntry, DayType } from "@/lib/types"
 
 type Tab = "horarios" | "etiquetas"
 
@@ -30,9 +30,10 @@ export default function HomePage() {
     entry: string,
     exit: string,
     description?: string,
-    labelId?: string
+    labelId?: string,
+    dayType?: DayType
   ) => {
-    addEntries(dates, entry, exit, description, labelId)
+    addEntries(dates, entry, exit, description, labelId, dayType)
   }
 
   const handleEditEntry = (entry: TimeEntry) => {
