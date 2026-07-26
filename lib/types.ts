@@ -5,7 +5,7 @@ export interface Label {
 }
 
 // Tipo de día: trabajado o alguno de los tipos de ausencia (0 horas)
-export type DayType = "work" | "franco" | "justificado" | "injustificado" | "suspension"
+export type DayType = "work" | "franco" | "justificado" | "injustificado"
 
 export interface TimeEntry {
   id: string

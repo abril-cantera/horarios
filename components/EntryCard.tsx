@@ -1,6 +1,6 @@
 "use client"
 
-import { Trash2, Pencil, Moon, ShieldCheck, ShieldX, Ban } from "lucide-react"
+import { Trash2, Pencil, Moon, ShieldCheck, ShieldX } from "lucide-react"
 import { TimeEntry, Label } from "@/lib/types"
 import { formatHours, formatDayLabel } from "@/lib/timeUtils"
 import { resolveAbsence, type AbsenceId } from "@/lib/absences"
@@ -9,7 +9,6 @@ const ABSENCE_ICONS: Record<AbsenceId, typeof Moon> = {
   franco: Moon,
   justificado: ShieldCheck,
   injustificado: ShieldX,
-  suspension: Ban,
 }
 
 interface Props {

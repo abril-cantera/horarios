@@ -27,10 +27,9 @@ export const PRESET_COLORS = [
 export const FRANCO_COLOR = "#0ea5e9" // celeste
 export const JUSTIFIED_COLOR = "#22c55e" // verde
 export const UNJUSTIFIED_COLOR = "#ef4444" // rojo
-export const SUSPENSION_COLOR = "#f59e0b" // ámbar
 
 // Colores reservados por los tipos de día especiales
-export const RESERVED_COLORS = [FRANCO_COLOR, JUSTIFIED_COLOR, UNJUSTIFIED_COLOR, SUSPENSION_COLOR]
+export const RESERVED_COLORS = [FRANCO_COLOR, JUSTIFIED_COLOR, UNJUSTIFIED_COLOR]
 
 // Colores disponibles para etiquetas personalizadas (excluye los reservados)
 export const LABEL_COLORS = PRESET_COLORS.filter((c) => !RESERVED_COLORS.includes(c))
