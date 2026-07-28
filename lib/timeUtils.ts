@@ -115,3 +115,31 @@ export function addMonthsToKey(key: string, delta: number): string {
 export function isFranco(minutes: number): boolean {
   return minutes === 0
 }
+
+// Objetivo mensual de horas (siempre 192h)
+export const TARGET_HOURS = 192
+
+// Cantidad de días de un mes según su clave YYYY-MM
+export function getDaysCountInMonthKey(key: string): number {
+  const [year, month] = key.split("-").map(Number)
+  return new Date(year, month, 0).getDate()
+}
+
+// Información del objetivo de horas para un mes:
+// - objetivo: 192h siempre
+// - umbral de advertencia: mes de 31 días => 192h, resto (30/29/28) => 194h
+export function getMonthTargetInfo(key: string): {
+  daysInMonth: number
+  targetMinutes: number
+  warningThresholdMinutes: number
+  warningThresholdHours: number
+} {
+  const daysInMonth = getDaysCountInMonthKey(key)
+  const warningThresholdHours = daysInMonth >= 31 ? 192 : 194
+  return {
+    daysInMonth,
+    targetMinutes: TARGET_HOURS * 60,
+    warningThresholdMinutes: warningThresholdHours * 60,
+    warningThresholdHours,
+  }
+}

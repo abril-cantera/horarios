@@ -17,9 +17,11 @@ interface Props {
   onDelete: (id: string) => void
   onEdit: (entry: TimeEntry) => void
   labels: Label[]
+  // Cuando el día tiene varios registros, se muestra "Reg N" en lugar de la fecha
+  registerIndex?: number
 }
 
-export function EntryCard({ entry, onDelete, onEdit, labels }: Props) {
+export function EntryCard({ entry, onDelete, onEdit, labels, registerIndex }: Props) {
   const label = entry.labelId ? labels.find(l => l.id === entry.labelId) : null
   const absence = resolveAbsence(entry)
   const AbsenceIcon = absence ? ABSENCE_ICONS[absence.id] : null
@@ -27,11 +29,17 @@ export function EntryCard({ entry, onDelete, onEdit, labels }: Props) {
   return (
     <div className="py-3 border-b border-border last:border-0">
       <div className="flex items-center gap-3">
-        {/* Date */}
+        {/* Date o número de registro */}
         <div className="w-14 shrink-0">
-          <p className="text-foreground text-sm font-mono capitalize">
-            {formatDayLabel(entry.date)}
-          </p>
+          {registerIndex ? (
+            <p className="text-muted-foreground text-xs font-mono">
+              Reg {registerIndex}
+            </p>
+          ) : (
+            <p className="text-foreground text-sm font-mono capitalize">
+              {formatDayLabel(entry.date)}
+            </p>
+          )}
         </div>
 
         {/* Times or Absence */}

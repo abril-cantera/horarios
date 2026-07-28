@@ -2,9 +2,23 @@
 
 import { useState } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
-import { MonthGroup, Label } from "@/lib/types"
+import { MonthGroup, Label, TimeEntry } from "@/lib/types"
 import { formatHours } from "@/lib/timeUtils"
-import { EntryCard } from "./EntryCard"
+import { DayGroup } from "./DayGroup"
+
+// Agrupa registros consecutivos por fecha preservando el orden
+function groupByDate(entries: TimeEntry[]): { date: string; entries: TimeEntry[] }[] {
+  const map = new Map<string, TimeEntry[]>()
+  const order: string[] = []
+  for (const entry of entries) {
+    if (!map.has(entry.date)) {
+      map.set(entry.date, [])
+      order.push(entry.date)
+    }
+    map.get(entry.date)!.push(entry)
+  }
+  return order.map(date => ({ date, entries: map.get(date)! }))
+}
 
 interface Props {
   group: MonthGroup
@@ -44,8 +58,15 @@ export function MonthGroupSection({ group, onDelete, onEdit, defaultOpen = false
       {/* Entries */}
       {open && (
         <div className="px-4 pb-2 border-t border-border">
-          {group.entries.map(entry => (
-            <EntryCard key={entry.id} entry={entry} onDelete={onDelete} onEdit={onEdit} labels={labels} />
+          {groupByDate(group.entries).map(day => (
+            <DayGroup
+              key={day.date}
+              date={day.date}
+              entries={day.entries}
+              onDelete={onDelete}
+              onEdit={onEdit}
+              labels={labels}
+            />
           ))}
         </div>
       )}

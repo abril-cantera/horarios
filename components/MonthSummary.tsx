@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { TimeEntry } from "@/lib/types"
 import {
   formatHours,
@@ -8,9 +8,11 @@ import {
   getMonthKey,
   getMonthRange,
   addMonthsToKey,
+  getMonthTargetInfo,
+  TARGET_HOURS,
 } from "@/lib/timeUtils"
 import { ABSENCE_TYPES, resolveAbsence, type AbsenceId } from "@/lib/absences"
-import { ChevronDown, ChevronLeft, ChevronRight, Moon, ShieldCheck, ShieldX, Ban } from "lucide-react"
+import { ChevronDown, ChevronLeft, ChevronRight, Moon, ShieldCheck, ShieldX, Ban, AlertTriangle, X } from "lucide-react"
 
 const ABSENCE_ICONS: Record<AbsenceId, typeof Moon> = {
   franco: Moon,
@@ -55,6 +57,17 @@ export function MonthSummary({ entries, selectedMonth, onSelectMonth }: Props) {
   const isCurrentMonth = selectedMonth === currentMonthKey
   const selectedLabel = months.find((m) => m.key === selectedMonth)?.label ?? selectedMonth
 
+  // Objetivo de horas y advertencia por exceso (solo mes actual)
+  const targetInfo = useMemo(() => getMonthTargetInfo(selectedMonth), [selectedMonth])
+  const overTarget = totalMinutes > targetInfo.warningThresholdMinutes
+  const showWarning = isCurrentMonth && overTarget
+
+  // Permitir ignorar la advertencia (se reactiva si el mes o el total cambian)
+  const [dismissed, setDismissed] = useState(false)
+  useEffect(() => {
+    setDismissed(false)
+  }, [selectedMonth, totalMinutes])
+
   return (
     <div className="space-y-3">
       {/* Month Selector con navegación */}
@@ -91,6 +104,36 @@ export function MonthSummary({ entries, selectedMonth, onSelectMonth }: Props) {
           <ChevronRight className="w-5 h-5" />
         </button>
       </div>
+
+      {/* Advertencia de horas objetivo superadas (solo mes actual, se puede ignorar) */}
+      {showWarning && !dismissed && (
+        <div
+          className="flex items-start gap-3 rounded-xl px-4 py-3 border"
+          style={{
+            backgroundColor: "var(--destructive)" + "14",
+            borderColor: "var(--destructive)" + "55",
+          }}
+          role="alert"
+        >
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-destructive" />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium font-sans text-destructive">
+              Horas objetivo superadas
+            </p>
+            <p className="text-xs text-muted-foreground font-mono mt-0.5 leading-relaxed">
+              Llevas {formatHours(totalMinutes)} este mes ({targetInfo.daysInMonth} días). El objetivo
+              es {TARGET_HOURS}h y superaste el límite de {targetInfo.warningThresholdHours}h.
+            </p>
+          </div>
+          <button
+            onClick={() => setDismissed(true)}
+            className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Ignorar advertencia"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 gap-3">

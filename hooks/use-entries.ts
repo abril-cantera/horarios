@@ -46,9 +46,8 @@ export function useEntries() {
         dayType: dayType ?? "work",
       }))
       setEntries((prev) => {
-        // Remove existing entries for same dates
-        const filtered = prev.filter((e) => !dates.includes(e.date))
-        return [...filtered, ...newEntries]
+        // Se permiten múltiples registros por día: solo agregamos
+        return [...prev, ...newEntries]
       })
     },
     []
