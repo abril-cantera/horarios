@@ -1,10 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown, ChevronUp, Layers } from "lucide-react"
+import { ChevronDown, ChevronUp } from "lucide-react"
 import { MonthGroup, Label, TimeEntry } from "@/lib/types"
-import { formatHours, formatDayLabel } from "@/lib/timeUtils"
-import { EntryCard } from "./EntryCard"
+import { formatHours } from "@/lib/timeUtils"
+import { DayGroup } from "./DayGroup"
 
 // Agrupa registros consecutivos por fecha preservando el orden
 function groupByDate(entries: TimeEntry[]): { date: string; entries: TimeEntry[] }[] {
@@ -58,59 +58,16 @@ export function MonthGroupSection({ group, onDelete, onEdit, defaultOpen = false
       {/* Entries */}
       {open && (
         <div className="px-4 pb-2 border-t border-border">
-          {groupByDate(group.entries).map(day => {
-            const isMulti = day.entries.length > 1
-            if (!isMulti) {
-              const entry = day.entries[0]
-              return (
-                <EntryCard
-                  key={entry.id}
-                  entry={entry}
-                  onDelete={onDelete}
-                  onEdit={onEdit}
-                  labels={labels}
-                />
-              )
-            }
-
-            const dayTotal = day.entries.reduce((sum, e) => sum + e.totalMinutes, 0)
-            return (
-              <div
-                key={day.date}
-                className="my-3 rounded-xl border border-border bg-secondary/40 overflow-hidden"
-              >
-                {/* Encabezado del día con varios registros */}
-                <div className="flex items-center justify-between px-3 py-2 border-b border-border">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold font-sans bg-primary/15 text-primary">
-                      <Layers className="w-3 h-3" />
-                      {day.entries.length} registros
-                    </span>
-                    <p className="text-foreground text-sm font-mono capitalize truncate">
-                      {formatDayLabel(day.date)}
-                    </p>
-                  </div>
-                  <span className="text-primary font-mono text-sm font-bold shrink-0">
-                    {formatHours(dayTotal)}
-                  </span>
-                </div>
-
-                {/* Registros del día */}
-                <div className="px-3">
-                  {day.entries.map((entry, i) => (
-                    <EntryCard
-                      key={entry.id}
-                      entry={entry}
-                      onDelete={onDelete}
-                      onEdit={onEdit}
-                      labels={labels}
-                      registerIndex={i + 1}
-                    />
-                  ))}
-                </div>
-              </div>
-            )
-          })}
+          {groupByDate(group.entries).map(day => (
+            <DayGroup
+              key={day.date}
+              date={day.date}
+              entries={day.entries}
+              onDelete={onDelete}
+              onEdit={onEdit}
+              labels={labels}
+            />
+          ))}
         </div>
       )}
     </div>
